@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>럭키드로우</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="resume-overlay" class="overlay" hidden>
+    <div class="overlay-box">
+      <p>이전에 진행하던 추첨이 있습니다.</p>
+      <div class="overlay-actions">
+        <button id="resume-continue" type="button">이어서 하기</button>
+        <button id="resume-restart" type="button">새로 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <main id="app">
+
+    <section id="screen-setup" data-screen="setup">
+      <h1>럭키드로우</h1>
+      <div class="setup-grid">
+        <div class="panel" id="panel-participants">
+          <h2>참가자</h2>
+          <div class="radio-row" role="radiogroup" aria-label="참가자 입력 방식">
+            <label><input type="radio" name="participant-mode" value="names" checked> 이름</label>
+            <label><input type="radio" name="participant-mode" value="count"> 인원수</label>
+          </div>
+          <textarea id="participant-names" placeholder="한 줄에 한 명, 또는 쉼표로 구분해서 입력"></textarea>
+          <input id="participant-count" type="number" min="1" max="500" placeholder="인원수" hidden>
+          <p id="participant-count-display" class="count-display">0명</p>
+          <p id="participant-dup-notice" class="notice" hidden></p>
+        </div>
+        <div class="panel" id="panel-prizes">
+          <h2>경품</h2>
+          <div id="prize-rows"></div>
+          <button type="button" id="add-prize-row" class="link-button">+ 경품 추가</button>
+          <p id="slot-summary" class="slot-summary"></p>
+        </div>
+      </div>
+      <p id="setup-error" class="error-text" role="alert" hidden></p>
+      <div class="setup-footer">
+        <button type="button" id="start-draw" class="primary-button" disabled>추첨 시작</button>
+      </div>
+    </section>
+
+    <section id="screen-draw" data-screen="draw" hidden>
+      <header class="draw-header">
+        <span id="draw-status-counts"></span>
+        <div class="draw-header-actions">
+          <button type="button" id="back-to-setup">설정</button>
+          <button type="button" id="end-draw">끝</button>
+        </div>
+      </header>
+      <div class="draw-grid">
+        <div class="wheel-area">
+          <div class="needle" aria-hidden="true"></div>
+          <div id="wheel-container"></div>
+          <button type="button" id="spin-button" class="primary-button">돌리기</button>
+        </div>
+        <div class="draw-side">
+          <div class="current-turn">
+            <h2>이번 차례</h2>
+            <p id="current-turn-name">—</p>
+          </div>
+          <div class="next-turns">
+            <h3>다음</h3>
+            <p id="next-turn-names">—</p>
+          </div>
+          <div class="winners-panel">
+            <h3>당첨자</h3>
+            <ol id="winners-list"></ol>
+          </div>
+          <div class="remaining-participants">
+            <h3>남은 참가자</h3>
+            <ul id="remaining-list"></ul>
+          </div>
+        </div>
+      </div>
+      <p id="undo-row" class="undo-row" hidden>
+        <button type="button" id="undo-last">방금 결과 취소</button>
+      </p>
+      <div id="result-overlay" class="result-overlay" hidden role="status" aria-live="polite">
+        <div class="result-box">
+          <p id="result-text"></p>
+          <button type="button" id="next-person-button" class="primary-button">다음 사람</button>
+        </div>
+      </div>
+      <p id="live-region" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section id="screen-result" data-screen="result" hidden>
+      <h1>추첨 결과</h1>
+      <table id="winners-table">
+        <thead><tr><th>순번</th><th>이름</th><th>경품</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="result-columns">
+        <div>
+          <h3>경품을 못 받은 참가자</h3>
+          <ul id="no-win-list"></ul>
+        </div>
+        <div>
+          <h3>남은 경품</h3>
+          <ul id="leftover-prize-list"></ul>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button type="button" id="download-csv">CSV 다운로드</button>
+        <button type="button" id="copy-clipboard">복사</button>
+        <button type="button" id="restart-same">같은 명단으로 다시</button>
+        <button type="button" id="restart-fresh" class="primary-button">처음부터</button>
+      </div>
+      <p id="copy-status" class="notice" aria-live="polite"></p>
+    </section>
+
+  </main>
+
+  <script src="random.js"></script>
+  <script src="wheel.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
