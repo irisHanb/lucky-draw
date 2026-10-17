@@ -1,0 +1,240 @@
+:root {
+  --bg: #E9EDF1;
+  --ink: #1A1A1A;
+  --prize-a: #F2C230;
+  --prize-b: #0F7A78;
+  --blank: #8C8C8C;
+  --accent: #D7263D;
+  --font-display: 'Black Han Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-body: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  margin: 0 0 0.5rem;
+}
+
+button {
+  font-family: var(--font-body);
+  font-weight: 700;
+  border: 3px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button:hover:not(:disabled) { background: var(--ink); color: #fff; }
+button.primary-button { background: var(--ink); color: #fff; }
+button.primary-button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+button.link-button { border: none; background: none; text-decoration: underline; padding: 0.3rem 0; }
+button.link-button:hover { background: none; color: var(--accent); }
+
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+#app { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+/* ---------- 설정 화면 ---------- */
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+
+.panel {
+  border: 1px solid var(--ink);
+  padding: 1.2rem;
+}
+
+.radio-row { display: flex; gap: 1.2rem; margin-bottom: 0.8rem; }
+
+textarea#participant-names {
+  width: 100%;
+  min-height: 220px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.6rem;
+  border: 2px solid var(--ink);
+  resize: vertical;
+}
+
+input#participant-count {
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.6rem;
+  border: 2px solid var(--ink);
+}
+
+.count-display { font-weight: 700; margin-top: 0.4rem; }
+.notice { color: var(--ink); font-size: 0.9rem; }
+.error-text { color: var(--accent); font-weight: 700; }
+
+.prize-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 40px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.prize-row input {
+  border: 2px solid var(--ink);
+  padding: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+.prize-row input.invalid { border-color: var(--accent); }
+.prize-row .prize-remove { padding: 0.3rem; }
+
+.slot-summary { margin-top: 1rem; font-weight: 700; }
+
+.setup-footer { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+
+/* ---------- 추첨 화면 ---------- */
+
+.draw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.draw-header-actions { display: flex; gap: 0.6rem; }
+
+.draw-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+}
+
+.wheel-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.needle {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 28px solid var(--ink);
+  position: relative;
+  z-index: 2;
+  margin-bottom: -4px;
+}
+
+#wheel-container {
+  width: min(70vh, 56vw);
+  max-width: 640px;
+  aspect-ratio: 1 / 1;
+}
+.wheel-svg { width: 100%; height: 100%; display: block; }
+.wheel-label { font-family: var(--font-display); }
+
+.draw-side > div { border: 1px solid var(--ink); padding: 0.9rem; margin-bottom: 1rem; }
+.draw-side h2 { font-size: 1.1rem; }
+#current-turn-name { font-size: 1.8rem; font-weight: 700; margin: 0; }
+#winners-list, #remaining-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+#winners-list li { padding: 0.2rem 0; }
+#remaining-list li { padding: 0.3rem 0.2rem; }
+#remaining-list li.current { font-weight: 700; color: var(--accent); }
+#remaining-list li.selectable { cursor: pointer; text-decoration: underline; }
+#remaining-list li.waiting { opacity: 0.5; }
+
+.undo-row { text-align: right; }
+
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(233, 237, 241, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+/* display:flex가 명시돼 있으면 [hidden]의 UA 기본 규칙(display:none)보다 출처 우선순위가 높아
+   hidden 속성만으로는 안 사라진다 — 명시적으로 다시 꺼준다. */
+.result-overlay[hidden] { display: none; }
+.result-box {
+  background: #fff;
+  border: 4px solid var(--ink);
+  padding: 2.5rem 3rem;
+  text-align: center;
+}
+#result-text { font-family: var(--font-display); font-size: 2.2rem; margin: 0 0 1.2rem; }
+
+/* ---------- 결과 화면 ---------- */
+
+#winners-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+#winners-table th, #winners-table td {
+  border: 1px solid var(--ink);
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+}
+
+.result-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem; }
+.result-columns ul { list-style: none; padding: 0; margin: 0; }
+
+.result-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+
+/* ---------- 이어서하기 오버레이 ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+.overlay[hidden] { display: none; }
+.overlay-box {
+  background: var(--bg);
+  border: 4px solid var(--ink);
+  padding: 2rem;
+  text-align: center;
+}
+.overlay-actions { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem; }
+
+/* ---------- 휴대폰 (360px) ---------- */
+
+@media (max-width: 480px) {
+  #app { padding: 0.8rem; }
+  .setup-grid { grid-template-columns: 1fr; gap: 1rem; }
+
+  .draw-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .draw-side { display: contents; }
+  .wheel-area { order: 1; }
+  .current-turn { order: 2; }
+  .winners-panel { order: 3; }
+  .next-turns { order: 4; }
+  .remaining-participants { order: 5; }
+
+  #wheel-container { width: 92vw; max-width: none; }
+  .result-box { padding: 1.5rem 1.2rem; }
+  .result-columns { grid-template-columns: 1fr; }
+}
