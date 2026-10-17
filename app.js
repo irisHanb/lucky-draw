@@ -327,6 +327,7 @@
     } else {
       box.textContent = `${resultInfo.name} 님 당첨: ${resultInfo.prize}`;
     }
+    el('next-person-button').textContent = state.phase === 'result' ? '결과 화면 보기' : '다음 사람';
     el('result-overlay').hidden = false;
     announce(box.textContent);
     if (!resultInfo.isBlank && !prefersReducedMotion()) Effects.fireworks(el('fireworks'));
