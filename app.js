@@ -471,6 +471,9 @@
 
   function wireDrawScreen() {
     el('spin-button').addEventListener('click', doSpin);
+    el('wheel-container').addEventListener('click', (ev) => {
+      if (ev.target.closest('.wheel-hub')) doSpin();
+    });
     el('next-person-button').addEventListener('click', hideResultOverlayAndAdvance);
     el('end-draw').addEventListener('click', () => {
       state.phase = 'result';

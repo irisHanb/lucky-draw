@@ -1,6 +1,6 @@
 // effects.js — 당첨 폭죽. 효과는 하나만, 1.5초 안에 끝낸다 (요구사항 10.2).
 const Effects = (() => {
-  const COLORS = ['#F2C230', '#0F7A78', '#D7263D'];
+  const COLORS = ['#F5C842', '#5B2A86', '#C23B5E', '#F29BC4'];
   const BURST_DELAYS = [0, 250, 500];
   const PARTICLES_PER_BURST = 48;
   const PARTICLE_LIFE = 900;
