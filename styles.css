@@ -161,7 +161,30 @@ input#participant-count {
 /* display:flex가 명시돼 있으면 [hidden]의 UA 기본 규칙(display:none)보다 출처 우선순위가 높아
    hidden 속성만으로는 안 사라진다 — 명시적으로 다시 꺼준다. */
 .result-overlay[hidden] { display: none; }
+#fireworks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.stamp {
+  display: inline-block;
+  color: var(--accent);
+  border: 4px solid var(--accent);
+  padding: 0 0.4em;
+  transform: rotate(-8deg);
+  animation: stamp 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+@keyframes stamp {
+  from { transform: scale(2.4) rotate(-20deg); opacity: 0; }
+  to { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp { animation: none; }
+}
 .result-box {
+  position: relative;
   background: #fff;
   border: 4px solid var(--ink);
   padding: 2.5rem 3rem;

@@ -5,6 +5,7 @@
 
   let state = null;
   let uiLocked = false;
+  let lastWinSliceId = null;
   let idCounter = 0;
   const nextId = (prefix) => `${prefix}${++idCounter}`;
 
@@ -311,15 +312,31 @@
     el('live-region').textContent = text;
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
   function showResultOverlay(resultInfo) {
-    const text = resultInfo.isBlank ? `${resultInfo.name}: 꽝` : `${resultInfo.name} 님 당첨: ${resultInfo.prize}`;
-    el('result-text').textContent = text;
+    const box = el('result-text');
+    if (resultInfo.isBlank) {
+      box.textContent = `${resultInfo.name}: `;
+      const stamp = document.createElement('span');
+      stamp.className = 'stamp';
+      stamp.textContent = '꽝';
+      box.appendChild(stamp);
+    } else {
+      box.textContent = `${resultInfo.name} 님 당첨: ${resultInfo.prize}`;
+    }
     el('result-overlay').hidden = false;
-    announce(text);
+    announce(box.textContent);
+    if (!resultInfo.isBlank && !prefersReducedMotion()) Effects.fireworks(el('fireworks'));
   }
 
   function hideResultOverlayAndAdvance() {
+    Effects.stop(el('fireworks'));
     el('result-overlay').hidden = true;
+    const removedSliceId = lastWinSliceId;
+    lastWinSliceId = null;
     if (state.phase === 'result') {
       render();
       return;
@@ -327,9 +344,14 @@
     advanceTurn();
     save();
     renderDrawSide();
-    setLocked(false);
-    const current = currentParticipant();
-    if (current) announce(`이번 차례: ${current.name}`);
+    const resume = () => {
+      setLocked(false);
+      const current = currentParticipant();
+      if (current) announce(`이번 차례: ${current.name}`);
+    };
+    // 결과창을 보는 동안에는 원판을 그대로 두고, 닫은 뒤에 당첨 칸을 빼고 재배치한다.
+    if (removedSliceId) Wheel.rearrange(removedSliceId, state.wheelSlices, resume);
+    else resume();
   }
 
   function doSpin() {
@@ -341,15 +363,9 @@
     setLocked(true);
     Wheel.spin(targetSliceId, () => {
       const resultInfo = applySpinResult(targetSliceId);
-      if (resultInfo.isBlank) {
-        showResultOverlay(resultInfo);
-        renderDrawSide();
-      } else {
-        Wheel.rearrange(targetSliceId, state.wheelSlices, () => {
-          showResultOverlay(resultInfo);
-          renderDrawSide();
-        });
-      }
+      if (!resultInfo.isBlank) lastWinSliceId = targetSliceId;
+      showResultOverlay(resultInfo);
+      renderDrawSide();
     });
   }
 
@@ -466,7 +482,10 @@
       render();
     });
     el('undo-last').addEventListener('click', () => {
-      if (!state.undoSnapshot) return;
+      // 잠긴 동안(회전·재배치 중)에는 결과창이 떠 있을 때만 되돌린다. 애니메이션 콜백이 되돌린 상태를 덮어쓰지 않도록.
+      if (!state.undoSnapshot || (uiLocked && el('result-overlay').hidden)) return;
+      Effects.stop(el('fireworks'));
+      lastWinSliceId = null;
       Object.assign(state, deepClone(state.undoSnapshot));
       state.undoSnapshot = null;
       save();
