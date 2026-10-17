@@ -70,15 +70,33 @@
     return { finalNames, dupedOriginals: [...dupedOriginals] };
   }
 
-  function readPrizeRows() {
-    const rows = [...el('prize-rows').querySelectorAll('.prize-row')];
-    return rows.map((row) => ({
-      row,
-      nameInput: row.querySelector('.prize-name'),
-      qtyInput: row.querySelector('.prize-qty'),
-      name: row.querySelector('.prize-name').value.trim(),
-      qtyRaw: row.querySelector('.prize-qty').value,
-    }));
+  // 한 줄에 경품 하나. "이름 x3"처럼 뒤에 수량을 붙일 수 있고, 없으면 1개. 같은 이름은 수량을 합친다.
+  function parsePrizes(rawText) {
+    const order = [];
+    const totals = {};
+    let qtyError = null;
+    for (const raw of rawText.split('\n')) {
+      const line = raw.trim();
+      if (!line) continue;
+      const m = line.match(/^(.+?)\s*[x×]\s*(\d+)\s*(?:개)?$/i);
+      let name = line;
+      let qty = 1;
+      if (m) {
+        name = m[1].trim();
+        qty = parseInt(m[2], 10);
+        if (qty <= 0) {
+          qtyError = line;
+          continue;
+        }
+      }
+      if (!name) continue;
+      if (!(name in totals)) {
+        totals[name] = 0;
+        order.push(name);
+      }
+      totals[name] += qty;
+    }
+    return { prizes: order.map((name) => ({ name, qty: totals[name] })), qtyError };
   }
 
   function validateSetup() {
@@ -94,26 +112,12 @@
     }
     const { finalNames, dupedOriginals } = resolveNames(rawNames);
 
-    const prizeEntries = readPrizeRows();
-    const prizes = [];
-    let qtyError = false;
-    for (const entry of prizeEntries) {
-      entry.qtyInput.classList.remove('invalid');
-      if (!entry.name) continue;
-      const qty = parseInt(entry.qtyRaw, 10);
-      if (!Number.isInteger(qty) || qty <= 0) {
-        entry.qtyInput.classList.add('invalid');
-        qtyError = true;
-        continue;
-      }
-      prizes.push({ name: entry.name, qty });
-    }
-
+    const { prizes, qtyError } = parsePrizes(el('prize-text').value);
     const totalSlots = prizes.reduce((sum, p) => sum + p.qty, 0) + 1;
 
     let error = null;
     if (qtyError) {
-      error = '경품 수량은 1 이상이어야 합니다.';
+      error = `경품 수량은 1 이상이어야 합니다. ("${qtyError}")`;
     } else if (finalNames.length === 0) {
       error = '참가자를 1명 이상 입력하세요.';
     } else if (prizes.length === 0) {
@@ -158,23 +162,6 @@
     el('start-draw').disabled = !v.ok;
 
     return v;
-  }
-
-  function addPrizeRow(name = '', qty = 1) {
-    const row = document.createElement('div');
-    row.className = 'prize-row';
-    row.innerHTML = `
-      <input type="text" class="prize-name" placeholder="경품 이름" value="${name}">
-      <input type="number" class="prize-qty" min="1" value="${qty}">
-      <button type="button" class="prize-remove" aria-label="경품 삭제">x</button>
-    `;
-    row.querySelector('.prize-name').addEventListener('input', updateSetupUI);
-    row.querySelector('.prize-qty').addEventListener('input', updateSetupUI);
-    row.querySelector('.prize-remove').addEventListener('click', () => {
-      row.remove();
-      updateSetupUI();
-    });
-    el('prize-rows').appendChild(row);
   }
 
   // --- 게임 진행 로직 ---
@@ -450,13 +437,12 @@
     document.querySelectorAll('input[name="participant-mode"]').forEach((r) => r.addEventListener('change', updateSetupUI));
     el('participant-names').addEventListener('input', updateSetupUI);
     el('participant-count').addEventListener('input', updateSetupUI);
-    el('add-prize-row').addEventListener('click', () => addPrizeRow());
+    el('prize-text').addEventListener('input', updateSetupUI);
     el('start-draw').addEventListener('click', () => {
       const v = validateSetup();
       if (!v.ok) return;
       startGame(v.finalNames, v.prizes);
     });
-    addPrizeRow();
     updateSetupUI();
   }
 
@@ -501,9 +487,8 @@
       if (!confirm('처음부터 다시 시작하시겠습니까? 지금까지 결과가 사라집니다.')) return;
       clearSaved();
       state = initialState();
-      document.querySelectorAll('.prize-row').forEach((r) => r.remove());
       el('participant-names').value = '';
-      addPrizeRow();
+      el('prize-text').value = '';
       render();
     });
   }

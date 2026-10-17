@@ -67,7 +67,8 @@ button.link-button:hover { background: none; color: var(--accent); }
 
 .radio-row { display: flex; gap: 1.2rem; margin-bottom: 0.8rem; }
 
-textarea#participant-names {
+textarea#participant-names,
+textarea#prize-text {
   width: 100%;
   min-height: 220px;
   font-family: var(--font-body);
@@ -87,21 +88,6 @@ input#participant-count {
 .count-display { font-weight: 700; margin-top: 0.4rem; }
 .notice { color: var(--ink); font-size: 0.9rem; }
 .error-text { color: var(--accent); font-weight: 700; }
-
-.prize-row {
-  display: grid;
-  grid-template-columns: 1fr 80px 40px;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.prize-row input {
-  border: 2px solid var(--ink);
-  padding: 0.5rem;
-  font-family: var(--font-body);
-  font-size: 1rem;
-}
-.prize-row input.invalid { border-color: var(--accent); }
-.prize-row .prize-remove { padding: 0.3rem; }
 
 .slot-summary { margin-top: 1rem; font-weight: 700; }
 
