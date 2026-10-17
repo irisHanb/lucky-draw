@@ -18,6 +18,7 @@
       wheelSlices: [],
       turnOrder: [],
       winners: [],
+      eliminated: [],
       pendingSpin: null,
       undoSnapshot: null,
     };
@@ -226,6 +227,7 @@
       wheelSlices: state.wheelSlices,
       turnOrder: state.turnOrder,
       winners: state.winners,
+      eliminated: state.eliminated,
       phase: state.phase,
     });
 
@@ -233,6 +235,9 @@
 
     let resultInfo;
     if (slice.isBlank) {
+      // 꽝은 즉시 탈락 — 참가자 명단에서 빠지고, 결과 화면에 남도록 따로 기록한다.
+      state.participants = state.participants.filter((p) => p.id !== participant.id);
+      state.eliminated = [...state.eliminated, participant];
       resultInfo = { isBlank: true, name: participant.name };
     } else {
       state.winners = [
@@ -365,7 +370,8 @@
       .map((w) => `<tr><td>${w.seq}</td><td>${escapeHtml(w.name)}</td><td>${escapeHtml(w.prize)}</td></tr>`)
       .join('');
 
-    el('no-win-list').innerHTML = state.participants.map((p) => `<li>${escapeHtml(p.name)}</li>`).join('') || '<li>없음</li>';
+    const noWin = [...state.participants, ...state.eliminated];
+    el('no-win-list').innerHTML = noWin.map((p) => `<li>${escapeHtml(p.name)}</li>`).join('') || '<li>없음</li>';
 
     const leftoverCounts = {};
     state.wheelSlices.filter((s) => !s.isBlank).forEach((s) => {
