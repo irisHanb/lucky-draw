@@ -6,7 +6,7 @@
 <title>럭키드로우</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -39,8 +39,7 @@
         </div>
         <div class="panel" id="panel-prizes">
           <h2>경품</h2>
-          <div id="prize-rows"></div>
-          <button type="button" id="add-prize-row" class="link-button">+ 경품 추가</button>
+          <textarea id="prize-text" placeholder="한 줄에 하나씩 입력. 수량은 뒤에 x3처럼 붙임&#10;예) 커피 쿠폰 x3&#10;이어폰"></textarea>
           <p id="slot-summary" class="slot-summary"></p>
         </div>
       </div>
@@ -60,7 +59,6 @@
       </header>
       <div class="draw-grid">
         <div class="wheel-area">
-          <div class="needle" aria-hidden="true"></div>
           <div id="wheel-container"></div>
           <button type="button" id="spin-button" class="primary-button">돌리기</button>
         </div>
@@ -87,6 +85,7 @@
         <button type="button" id="undo-last">방금 결과 취소</button>
       </p>
       <div id="result-overlay" class="result-overlay" hidden role="status" aria-live="polite">
+        <canvas id="fireworks" aria-hidden="true"></canvas>
         <div class="result-box">
           <p id="result-text"></p>
           <button type="button" id="next-person-button" class="primary-button">다음 사람</button>
@@ -124,6 +123,7 @@
 
   <script src="random.js"></script>
   <script src="wheel.js"></script>
+  <script src="effects.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

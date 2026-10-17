@@ -5,6 +5,7 @@
 
   let state = null;
   let uiLocked = false;
+  let lastWinSliceId = null;
   let idCounter = 0;
   const nextId = (prefix) => `${prefix}${++idCounter}`;
 
@@ -18,6 +19,7 @@
       wheelSlices: [],
       turnOrder: [],
       winners: [],
+      eliminated: [],
       pendingSpin: null,
       undoSnapshot: null,
     };
@@ -70,15 +72,33 @@
     return { finalNames, dupedOriginals: [...dupedOriginals] };
   }
 
-  function readPrizeRows() {
-    const rows = [...el('prize-rows').querySelectorAll('.prize-row')];
-    return rows.map((row) => ({
-      row,
-      nameInput: row.querySelector('.prize-name'),
-      qtyInput: row.querySelector('.prize-qty'),
-      name: row.querySelector('.prize-name').value.trim(),
-      qtyRaw: row.querySelector('.prize-qty').value,
-    }));
+  // 한 줄에 경품 하나. "이름 x3"처럼 뒤에 수량을 붙일 수 있고, 없으면 1개. 같은 이름은 수량을 합친다.
+  function parsePrizes(rawText) {
+    const order = [];
+    const totals = {};
+    let qtyError = null;
+    for (const raw of rawText.split('\n')) {
+      const line = raw.trim();
+      if (!line) continue;
+      const m = line.match(/^(.+?)\s*[x×]\s*(\d+)\s*(?:개)?$/i);
+      let name = line;
+      let qty = 1;
+      if (m) {
+        name = m[1].trim();
+        qty = parseInt(m[2], 10);
+        if (qty <= 0) {
+          qtyError = line;
+          continue;
+        }
+      }
+      if (!name) continue;
+      if (!(name in totals)) {
+        totals[name] = 0;
+        order.push(name);
+      }
+      totals[name] += qty;
+    }
+    return { prizes: order.map((name) => ({ name, qty: totals[name] })), qtyError };
   }
 
   function validateSetup() {
@@ -94,26 +114,12 @@
     }
     const { finalNames, dupedOriginals } = resolveNames(rawNames);
 
-    const prizeEntries = readPrizeRows();
-    const prizes = [];
-    let qtyError = false;
-    for (const entry of prizeEntries) {
-      entry.qtyInput.classList.remove('invalid');
-      if (!entry.name) continue;
-      const qty = parseInt(entry.qtyRaw, 10);
-      if (!Number.isInteger(qty) || qty <= 0) {
-        entry.qtyInput.classList.add('invalid');
-        qtyError = true;
-        continue;
-      }
-      prizes.push({ name: entry.name, qty });
-    }
-
+    const { prizes, qtyError } = parsePrizes(el('prize-text').value);
     const totalSlots = prizes.reduce((sum, p) => sum + p.qty, 0) + 1;
 
     let error = null;
     if (qtyError) {
-      error = '경품 수량은 1 이상이어야 합니다.';
+      error = `경품 수량은 1 이상이어야 합니다. ("${qtyError}")`;
     } else if (finalNames.length === 0) {
       error = '참가자를 1명 이상 입력하세요.';
     } else if (prizes.length === 0) {
@@ -158,23 +164,6 @@
     el('start-draw').disabled = !v.ok;
 
     return v;
-  }
-
-  function addPrizeRow(name = '', qty = 1) {
-    const row = document.createElement('div');
-    row.className = 'prize-row';
-    row.innerHTML = `
-      <input type="text" class="prize-name" placeholder="경품 이름" value="${name}">
-      <input type="number" class="prize-qty" min="1" value="${qty}">
-      <button type="button" class="prize-remove" aria-label="경품 삭제">x</button>
-    `;
-    row.querySelector('.prize-name').addEventListener('input', updateSetupUI);
-    row.querySelector('.prize-qty').addEventListener('input', updateSetupUI);
-    row.querySelector('.prize-remove').addEventListener('click', () => {
-      row.remove();
-      updateSetupUI();
-    });
-    el('prize-rows').appendChild(row);
   }
 
   // --- 게임 진행 로직 ---
@@ -239,6 +228,7 @@
       wheelSlices: state.wheelSlices,
       turnOrder: state.turnOrder,
       winners: state.winners,
+      eliminated: state.eliminated,
       phase: state.phase,
     });
 
@@ -246,6 +236,9 @@
 
     let resultInfo;
     if (slice.isBlank) {
+      // 꽝은 즉시 탈락 — 참가자 명단에서 빠지고, 결과 화면에 남도록 따로 기록한다.
+      state.participants = state.participants.filter((p) => p.id !== participant.id);
+      state.eliminated = [...state.eliminated, participant];
       resultInfo = { isBlank: true, name: participant.name };
     } else {
       state.winners = [
@@ -319,15 +312,32 @@
     el('live-region').textContent = text;
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
   function showResultOverlay(resultInfo) {
-    const text = resultInfo.isBlank ? `${resultInfo.name}: 꽝` : `${resultInfo.name} 님 당첨: ${resultInfo.prize}`;
-    el('result-text').textContent = text;
+    const box = el('result-text');
+    if (resultInfo.isBlank) {
+      box.textContent = `${resultInfo.name}: `;
+      const stamp = document.createElement('span');
+      stamp.className = 'stamp';
+      stamp.textContent = '꽝';
+      box.appendChild(stamp);
+    } else {
+      box.textContent = `${resultInfo.name} 님 당첨: ${resultInfo.prize}`;
+    }
+    el('next-person-button').textContent = state.phase === 'result' ? '결과 화면 보기' : '다음 사람';
     el('result-overlay').hidden = false;
-    announce(text);
+    announce(box.textContent);
+    if (!resultInfo.isBlank && !prefersReducedMotion()) Effects.fireworks(el('fireworks'));
   }
 
   function hideResultOverlayAndAdvance() {
+    Effects.stop(el('fireworks'));
     el('result-overlay').hidden = true;
+    const removedSliceId = lastWinSliceId;
+    lastWinSliceId = null;
     if (state.phase === 'result') {
       render();
       return;
@@ -335,9 +345,14 @@
     advanceTurn();
     save();
     renderDrawSide();
-    setLocked(false);
-    const current = currentParticipant();
-    if (current) announce(`이번 차례: ${current.name}`);
+    const resume = () => {
+      setLocked(false);
+      const current = currentParticipant();
+      if (current) announce(`이번 차례: ${current.name}`);
+    };
+    // 결과창을 보는 동안에는 원판을 그대로 두고, 닫은 뒤에 당첨 칸을 빼고 재배치한다.
+    if (removedSliceId) Wheel.rearrange(removedSliceId, state.wheelSlices, resume);
+    else resume();
   }
 
   function doSpin() {
@@ -349,15 +364,9 @@
     setLocked(true);
     Wheel.spin(targetSliceId, () => {
       const resultInfo = applySpinResult(targetSliceId);
-      if (resultInfo.isBlank) {
-        showResultOverlay(resultInfo);
-        renderDrawSide();
-      } else {
-        Wheel.rearrange(targetSliceId, state.wheelSlices, () => {
-          showResultOverlay(resultInfo);
-          renderDrawSide();
-        });
-      }
+      if (!resultInfo.isBlank) lastWinSliceId = targetSliceId;
+      showResultOverlay(resultInfo);
+      renderDrawSide();
     });
   }
 
@@ -378,7 +387,8 @@
       .map((w) => `<tr><td>${w.seq}</td><td>${escapeHtml(w.name)}</td><td>${escapeHtml(w.prize)}</td></tr>`)
       .join('');
 
-    el('no-win-list').innerHTML = state.participants.map((p) => `<li>${escapeHtml(p.name)}</li>`).join('') || '<li>없음</li>';
+    const noWin = [...state.participants, ...state.eliminated];
+    el('no-win-list').innerHTML = noWin.map((p) => `<li>${escapeHtml(p.name)}</li>`).join('') || '<li>없음</li>';
 
     const leftoverCounts = {};
     state.wheelSlices.filter((s) => !s.isBlank).forEach((s) => {
@@ -450,18 +460,20 @@
     document.querySelectorAll('input[name="participant-mode"]').forEach((r) => r.addEventListener('change', updateSetupUI));
     el('participant-names').addEventListener('input', updateSetupUI);
     el('participant-count').addEventListener('input', updateSetupUI);
-    el('add-prize-row').addEventListener('click', () => addPrizeRow());
+    el('prize-text').addEventListener('input', updateSetupUI);
     el('start-draw').addEventListener('click', () => {
       const v = validateSetup();
       if (!v.ok) return;
       startGame(v.finalNames, v.prizes);
     });
-    addPrizeRow();
     updateSetupUI();
   }
 
   function wireDrawScreen() {
     el('spin-button').addEventListener('click', doSpin);
+    el('wheel-container').addEventListener('click', (ev) => {
+      if (ev.target.closest('.wheel-hub')) doSpin();
+    });
     el('next-person-button').addEventListener('click', hideResultOverlayAndAdvance);
     el('end-draw').addEventListener('click', () => {
       state.phase = 'result';
@@ -474,7 +486,10 @@
       render();
     });
     el('undo-last').addEventListener('click', () => {
-      if (!state.undoSnapshot) return;
+      // 잠긴 동안(회전·재배치 중)에는 결과창이 떠 있을 때만 되돌린다. 애니메이션 콜백이 되돌린 상태를 덮어쓰지 않도록.
+      if (!state.undoSnapshot || (uiLocked && el('result-overlay').hidden)) return;
+      Effects.stop(el('fireworks'));
+      lastWinSliceId = null;
       Object.assign(state, deepClone(state.undoSnapshot));
       state.undoSnapshot = null;
       save();
@@ -501,9 +516,8 @@
       if (!confirm('처음부터 다시 시작하시겠습니까? 지금까지 결과가 사라집니다.')) return;
       clearSaved();
       state = initialState();
-      document.querySelectorAll('.prize-row').forEach((r) => r.remove());
       el('participant-names').value = '';
-      addPrizeRow();
+      el('prize-text').value = '';
       render();
     });
   }
