@@ -40,12 +40,14 @@ import Wheel from './wheel.js';
   console.log('PASS: 바늘-결과 일치 (1,000회, 2~30칸)');
 }
 
-// 글자 대비 4.5:1 (9장) — 팔레트 고정값이라 회귀 가능성이 있어 체크해둔다
+// 글자 대비 4.5:1 (9장) — 원판의 모든 칸 색과 꽝 무늬 두 색에서 실제로 쓰이는 글자색을 검사한다
 {
-  assert.ok(Wheel.contrastRatio('#1A1A1A', '#F2C230') >= 4.5, '먹색 vs 노랑 대비 부족');
-  assert.ok(Wheel.contrastRatio('#1A1A1A', '#8C8C8C') >= 4.5, '먹색 vs 꽝색 대비 부족');
-  assert.equal(Wheel.labelColorFor('#0F7A78'), '#FFFFFF', '청록 배경에서 흰 글자로 바뀌지 않음');
-  assert.ok(Wheel.contrastRatio('#FFFFFF', '#0F7A78') >= 4.5, '흰색 vs 청록 대비 부족');
+  const { slices, blank, blankStripe } = Wheel.COLORS;
+  for (const bg of [...slices, blank, blankStripe]) {
+    const ratio = Wheel.contrastRatio(Wheel.labelColorFor(bg), bg);
+    assert.ok(ratio >= 4.5, `배경 ${bg}: 글자 대비 ${ratio.toFixed(2)}:1`);
+  }
+  assert.equal(Wheel.labelColorFor('#0F7A78'), '#FFFFFF', '어두운 배경에서 흰 글자로 바뀌지 않음');
   console.log('PASS: 글자 대비 4.5:1');
 }
 

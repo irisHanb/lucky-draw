@@ -3,17 +3,26 @@
 // random.js가 만든 전역 Random을 그대로 쓴다. Node(selftest)에서는 selftest.mjs가 globalThis.Random을 미리 채워준다.
 const Wheel = (() => {
   const COLORS = {
-    prizeA: '#F2C230',
-    prizeB: '#0F7A78',
-    blank: '#8C8C8C',
-    ink: '#1A1A1A',
-    accent: '#D7263D',
+    slices: ['#E3D3F5', '#FFFFFF', '#F7D3E6', '#D3DAF5'],
+    blank: '#ECE8F0',
+    blankStripe: '#D9D2E3',
+    ink: '#3B2350',
+    rim: '#5B2A86',
+    rimEdge: '#3E1A63',
+    dot: '#F5C842',
+    accent: '#C23B5E',
   };
 
-  const SIZE = 600;
-  const CX = SIZE / 2;
-  const CY = SIZE / 2;
-  const R = SIZE / 2 - 10;
+  // 위쪽에 핀 바늘이 들어갈 자리를 남기려고 세로를 40 더 둔다.
+  const W = 600;
+  const H = 640;
+  const CX = W / 2;
+  const CY = 330;
+  const R = 262;
+  const RIM_R = 278;
+  const RIM_W = 32;
+  const DOT_COUNT = 16;
+  const HUB_R = 58;
 
   let containerEl = null;
   let rotorEl = null;
@@ -55,13 +64,16 @@ const Wheel = (() => {
     return (lighter + 0.05) / (darker + 0.05);
   }
 
-  // 글자 대비 4.5:1 이상 (9장). 먹색이 기준에 못 미치는 배경(청록)에서만 흰색으로 바꾼다.
+  // 글자 대비 4.5:1 이상 (9장). 기본 글자색이 기준에 못 미치는 배경에서만 흰색으로 바꾼다.
   function labelColorFor(bgHex) {
     return contrastRatio(COLORS.ink, bgHex) >= 4.5 ? COLORS.ink : '#FFFFFF';
   }
 
-  function colorForIndex(i) {
-    return i % 2 === 0 ? COLORS.prizeA : COLORS.prizeB;
+  // 색을 순서대로 돌려 쓰면 칸 수가 (색 수 × k + 1)일 때 마지막 칸과 첫 칸이 같은 색으로 붙는다. 그때만 마지막 칸 색을 바꾼다.
+  function colorForIndex(i, n) {
+    const len = COLORS.slices.length;
+    if (n > 1 && i === n - 1 && i % len === 0) return COLORS.slices[2];
+    return COLORS.slices[i % len];
   }
 
   // 0 = 12시, 시계방향 증가.
@@ -96,10 +108,10 @@ const Wheel = (() => {
 
   function labelMarkup(entry, i, n) {
     const mid = (entry.start + entry.end) / 2;
-    const textR = R * 0.9;
+    const textR = R * 0.84; // 핀 바늘 끝과 겹치지 않을 만큼 안쪽에서 시작
     const p = polar(CX, CY, textR, mid);
     const rot = mid + 90; // 텍스트 로컬 +x가 중심 쪽을 향하게 (바깥→안쪽 읽기, 7장)
-    const fill = entry.isBlank ? labelColorFor(COLORS.blank) : labelColorFor(colorForIndex(i));
+    const fill = entry.isBlank ? labelColorFor(COLORS.blank) : labelColorFor(colorForIndex(i, n));
     const fontSize = fontSizeFor(n);
     const { text, truncated } = truncateLabel(entry.label, entry.width);
     const title = truncated ? `<title>${escapeXml(entry.label)}</title>` : '';
@@ -109,26 +121,54 @@ const Wheel = (() => {
   function stripeDefs() {
     return `<defs><pattern id="stripe-pattern" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
       <rect width="14" height="14" fill="${COLORS.blank}"/>
-      <rect width="7" height="14" fill="#767676"/>
+      <rect width="7" height="14" fill="${COLORS.blankStripe}"/>
     </pattern></defs>`;
+  }
+
+  function rimMarkup() {
+    let svg = `<circle cx="${CX}" cy="${CY}" r="${RIM_R}" fill="none" stroke="${COLORS.rim}" stroke-width="${RIM_W}"/>`;
+    svg += `<circle cx="${CX}" cy="${CY}" r="${RIM_R + RIM_W / 2}" fill="none" stroke="${COLORS.rimEdge}" stroke-width="3"/>`;
+    const step = 360 / DOT_COUNT;
+    for (let k = 0; k < DOT_COUNT; k++) {
+      const p = polar(CX, CY, RIM_R, k * step + step / 2); // 반 칸 밀어서 12시 핀 아래에는 점이 없게
+      svg += `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="6" fill="${COLORS.dot}"/>`;
+    }
+    return svg;
+  }
+
+  // 12시 방향 고정 핀. 끝이 칸 안쪽을 가리킨다.
+  function pinMarkup() {
+    const headY = 44;
+    const tipY = 98;
+    const r = 26;
+    const d = `M ${CX} ${tipY} C ${CX - 10} ${tipY - 22}, ${CX - r} ${headY + 16}, ${CX - r} ${headY} A ${r} ${r} 0 1 1 ${CX + r} ${headY} C ${CX + r} ${headY + 16}, ${CX + 10} ${tipY - 22}, ${CX} ${tipY} Z`;
+    return `<path d="${d}" fill="${COLORS.accent}" stroke="#FFFFFF" stroke-width="3"/><circle cx="${CX}" cy="${headY}" r="9" fill="#FFFFFF"/>`;
+  }
+
+  function hubMarkup() {
+    return `<g class="wheel-hub">
+      <circle cx="${CX}" cy="${CY}" r="${HUB_R}" fill="#FFFFFF" stroke="${COLORS.rim}" stroke-width="8"/>
+      <text x="${CX}" y="${CY}" fill="${COLORS.rim}" font-size="26" text-anchor="middle" dominant-baseline="central">돌리기</text>
+    </g>`;
   }
 
   function buildSvg(slices) {
     const layout = computeLayout(slices);
-    let svg = `<svg viewBox="0 0 ${SIZE} ${SIZE}" class="wheel-svg" role="img" aria-label="추첨 원판">`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" class="wheel-svg" role="img" aria-label="추첨 원판">`;
     svg += stripeDefs();
     // SVG 요소의 CSS transform 기준점은 기본값이 (0,0)이라 중심을 명시해야 테두리와 겹친다.
     svg += `<g id="wheel-rotor" style="transform-origin:${CX}px ${CY}px;transform:rotate(${currentRotation}deg)">`;
     layout.forEach((entry, i) => {
-      const fill = entry.isBlank ? 'url(#stripe-pattern)' : colorForIndex(i);
-      svg += `<path d="${wedgePath(CX, CY, R, entry.start, entry.end)}" fill="${fill}" stroke="${COLORS.ink}" stroke-width="3"/>`;
+      const fill = entry.isBlank ? 'url(#stripe-pattern)' : colorForIndex(i, layout.length);
+      svg += `<path d="${wedgePath(CX, CY, R, entry.start, entry.end)}" fill="${fill}" stroke="#FFFFFF" stroke-width="3"/>`;
     });
     layout.forEach((entry, i) => {
       svg += labelMarkup(entry, i, layout.length);
     });
     svg += `</g>`;
-    svg += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${COLORS.ink}" stroke-width="6"/>`;
-    svg += `<circle cx="${CX}" cy="${CY}" r="20" fill="${COLORS.ink}"/>`;
+    svg += rimMarkup();
+    svg += hubMarkup();
+    svg += pinMarkup();
     svg += `</svg>`;
     return svg;
   }

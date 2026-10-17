@@ -1,11 +1,15 @@
 :root {
-  --bg: #E9EDF1;
-  --ink: #1A1A1A;
-  --prize-a: #F2C230;
-  --prize-b: #0F7A78;
-  --blank: #8C8C8C;
-  --accent: #D7263D;
-  --font-display: 'Black Han Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --bg: #F7EFF4;
+  --surface: #FFFFFF;
+  --line: #E8D9E6;
+  --ink: #2E1F3A;
+  --ink-soft: #6B5878;
+  --primary: #5B2A86;
+  --primary-soft: #EFE6F7;
+  --accent: #C23B5E;
+  --gold: #F5C842;
+  --radius: 16px;
+  --font-display: 'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-body: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
 }
 
@@ -20,27 +24,37 @@ html, body {
 
 h1, h2, h3 {
   font-family: var(--font-display);
+  font-weight: 400;
   margin: 0 0 0.5rem;
 }
+h1 { color: var(--primary); font-size: 2.4rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.1rem; color: var(--ink-soft); }
 
 button {
   font-family: var(--font-body);
   font-weight: 700;
-  border: 3px solid var(--ink);
-  background: #fff;
-  color: var(--ink);
-  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--primary);
+  background: var(--surface);
+  color: var(--primary);
+  padding: 0.6rem 1.3rem;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 999px;
 }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
-button:hover:not(:disabled) { background: var(--ink); color: #fff; }
-button.primary-button { background: var(--ink); color: #fff; }
-button.primary-button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
-button.link-button { border: none; background: none; text-decoration: underline; padding: 0.3rem 0; }
-button.link-button:hover { background: none; color: var(--accent); }
+button:hover:not(:disabled) { background: var(--primary-soft); }
+button.primary-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  padding: 0.75rem 2rem;
+}
+button.primary-button:hover:not(:disabled) { background: #A82F4F; border-color: #A82F4F; }
 
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 
 .sr-only {
   position: absolute;
@@ -56,54 +70,44 @@ button.link-button:hover { background: none; color: var(--accent); }
 .setup-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1.5rem;
   margin: 1.5rem 0;
 }
 
 .panel {
-  border: 1px solid var(--ink);
-  padding: 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem;
 }
 
 .radio-row { display: flex; gap: 1.2rem; margin-bottom: 0.8rem; }
+.radio-row input { accent-color: var(--primary); }
 
-textarea#participant-names {
-  width: 100%;
-  min-height: 220px;
-  font-family: var(--font-body);
-  font-size: 1rem;
-  padding: 0.6rem;
-  border: 2px solid var(--ink);
-  resize: vertical;
-}
-
+textarea#participant-names,
+textarea#prize-text,
 input#participant-count {
   width: 100%;
-  font-size: 1rem;
-  padding: 0.6rem;
-  border: 2px solid var(--ink);
-}
-
-.count-display { font-weight: 700; margin-top: 0.4rem; }
-.notice { color: var(--ink); font-size: 0.9rem; }
-.error-text { color: var(--accent); font-weight: 700; }
-
-.prize-row {
-  display: grid;
-  grid-template-columns: 1fr 80px 40px;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.prize-row input {
-  border: 2px solid var(--ink);
-  padding: 0.5rem;
   font-family: var(--font-body);
   font-size: 1rem;
+  padding: 0.75rem;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #FDFBFD;
+  color: var(--ink);
 }
-.prize-row input.invalid { border-color: var(--accent); }
-.prize-row .prize-remove { padding: 0.3rem; }
+textarea#participant-names,
+textarea#prize-text {
+  min-height: 220px;
+  resize: vertical;
+}
+textarea:focus, input:focus { border-color: var(--primary); outline: none; }
 
-.slot-summary { margin-top: 1rem; font-weight: 700; }
+.count-display { font-weight: 700; margin-top: 0.4rem; color: var(--primary); }
+.notice { color: var(--ink-soft); font-size: 0.9rem; }
+.error-text { color: var(--accent); font-weight: 700; }
+
+.slot-summary { margin-top: 1rem; font-weight: 700; color: var(--primary); }
 
 .setup-footer { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
 
@@ -114,6 +118,7 @@ input#participant-count {
   justify-content: space-between;
   align-items: center;
   font-weight: 700;
+  color: var(--primary);
   margin-bottom: 1rem;
 }
 .draw-header-actions { display: flex; gap: 0.6rem; }
@@ -125,37 +130,31 @@ input#participant-count {
 }
 
 .wheel-area {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-}
-
-.needle {
-  width: 0;
-  height: 0;
-  border-left: 18px solid transparent;
-  border-right: 18px solid transparent;
-  border-top: 28px solid var(--ink);
-  position: relative;
-  z-index: 2;
-  margin-bottom: -4px;
+  gap: 1.2rem;
 }
 
 #wheel-container {
-  width: min(70vh, 56vw);
+  width: min(66vh, 56vw);
   max-width: 640px;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 600 / 640;
 }
 .wheel-svg { width: 100%; height: 100%; display: block; }
-.wheel-label { font-family: var(--font-display); }
+.wheel-label, .wheel-hub text { font-family: var(--font-display); }
+.wheel-hub { cursor: pointer; }
 
-.draw-side > div { border: 1px solid var(--ink); padding: 0.9rem; margin-bottom: 1rem; }
-.draw-side h2 { font-size: 1.1rem; }
-#current-turn-name { font-size: 1.8rem; font-weight: 700; margin: 0; }
+.draw-side > div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+#current-turn-name { font-family: var(--font-display); font-size: 2rem; color: var(--primary); margin: 0; }
 #winners-list, #remaining-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
-#winners-list li { padding: 0.2rem 0; }
+#winners-list li { padding: 0.25rem 0; }
 #remaining-list li { padding: 0.3rem 0.2rem; }
 #remaining-list li.current { font-weight: 700; color: var(--accent); }
 #remaining-list li.selectable { cursor: pointer; text-decoration: underline; }
@@ -166,7 +165,7 @@ input#participant-count {
 .result-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(233, 237, 241, 0.92);
+  background: rgba(247, 239, 244, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,24 +174,66 @@ input#participant-count {
 /* display:flex가 명시돼 있으면 [hidden]의 UA 기본 규칙(display:none)보다 출처 우선순위가 높아
    hidden 속성만으로는 안 사라진다 — 명시적으로 다시 꺼준다. */
 .result-overlay[hidden] { display: none; }
+#fireworks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.stamp {
+  display: inline-block;
+  color: var(--accent);
+  border: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 0 0.4em;
+  transform: rotate(-8deg);
+  animation: stamp 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+@keyframes stamp {
+  from { transform: scale(2.4) rotate(-20deg); opacity: 0; }
+  to { transform: scale(1) rotate(-8deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stamp { animation: none; }
+}
 .result-box {
-  background: #fff;
-  border: 4px solid var(--ink);
+  position: relative;
+  background: var(--surface);
+  border: 4px solid var(--primary);
+  border-radius: 24px;
   padding: 2.5rem 3rem;
   text-align: center;
 }
-#result-text { font-family: var(--font-display); font-size: 2.2rem; margin: 0 0 1.2rem; }
+#result-text { font-family: var(--font-display); font-size: 2.4rem; color: var(--ink); margin: 0 0 1.4rem; }
 
 /* ---------- 결과 화면 ---------- */
 
-#winners-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-#winners-table th, #winners-table td {
-  border: 1px solid var(--ink);
-  padding: 0.5rem 0.8rem;
-  text-align: left;
+#winners-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1rem 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
 }
+#winners-table th, #winners-table td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+#winners-table th { background: var(--primary); color: #fff; font-weight: 700; }
+#winners-table tr:last-child td { border-bottom: none; }
 
-.result-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem; }
+.result-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.result-columns > div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
 .result-columns ul { list-style: none; padding: 0; margin: 0; }
 
 .result-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
@@ -202,7 +243,7 @@ input#participant-count {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(26, 26, 26, 0.6);
+  background: rgba(46, 31, 58, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,31 +251,41 @@ input#participant-count {
 }
 .overlay[hidden] { display: none; }
 .overlay-box {
-  background: var(--bg);
-  border: 4px solid var(--ink);
-  padding: 2rem;
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 2rem 2.4rem;
   text-align: center;
 }
 .overlay-actions { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem; }
 
-/* ---------- 휴대폰 (360px) ---------- */
+/* ---------- 좁은 화면: 원판 옆에 사이드 패널(320px)을 둘 폭이 안 되면 세로로 쌓는다 ---------- */
 
-@media (max-width: 480px) {
-  #app { padding: 0.8rem; }
-  .setup-grid { grid-template-columns: 1fr; gap: 1rem; }
-
+@media (max-width: 900px) {
   .draw-grid {
     display: flex;
     flex-direction: column;
   }
   .draw-side { display: contents; }
+  .draw-side > div { margin-bottom: 0; }
   .wheel-area { order: 1; }
   .current-turn { order: 2; }
   .winners-panel { order: 3; }
   .next-turns { order: 4; }
   .remaining-participants { order: 5; }
 
-  #wheel-container { width: 92vw; max-width: none; }
-  .result-box { padding: 1.5rem 1.2rem; }
+  #wheel-container { width: min(92vw, 70vh); max-width: none; }
+}
+
+@media (max-width: 700px) {
+  .setup-grid { grid-template-columns: 1fr; gap: 1rem; }
   .result-columns { grid-template-columns: 1fr; }
+}
+
+/* ---------- 휴대폰 (360px) ---------- */
+
+@media (max-width: 480px) {
+  #app { padding: 0.8rem; }
+  h1 { font-size: 2rem; }
+  .result-box { padding: 1.5rem 1.2rem; }
+  #result-text { font-size: 1.8rem; }
 }
